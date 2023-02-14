@@ -1,0 +1,12 @@
+version: 2
+accounts:
+  - boid: BENEFICIERY_ID
+    password: MEROSHARE_PASSWORD
+    crn: CRN_NUMBER
+    dp: DEPOSITORY_PARTICIPANT_NAME
+    pin: TRANSACTION_PIN
+kitta: NO_OF_KITTAS
+timeout: TIMEOUT_FOR_PROCESS
+retries: MAX_RETRIES
+sendmail: SEND_EMAIL_OR_NOT
+usermail: EMAIL_TO_SEND_EMAIL_TO
