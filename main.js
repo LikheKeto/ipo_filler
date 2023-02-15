@@ -1,23 +1,11 @@
 import { fillIPO } from "./pkg/functions.js";
 import { getAccountDetails } from "./pkg/input.js";
-import { createTransport } from "nodemailer";
-const configs = getAccountDetails("./config.yaml");
 import { config } from "dotenv";
 config();
-
-let transporter;
+import { transporter } from "./pkg/emailer.js";
+const configs = getAccountDetails("./config.yaml");
 
 console.log("Started service");
-
-if (configs.sendmail) {
-  transporter = createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.EMAIL,
-      pass: process.env.PASSWORD,
-    },
-  });
-}
 
 setInterval(async () => {
   for (const account of configs.accounts) {
@@ -26,7 +14,8 @@ setInterval(async () => {
       await fillIPO(
         account,
         configs.kitta,
-        configs.timeout * 1000 // convert seconds to ms
+        configs.timeout * 1000, // convert seconds to ms
+        configs.sendmail
       );
     } catch (err) {
       if (
@@ -41,14 +30,16 @@ setInterval(async () => {
           subject: "Unable to apply IPO!",
           text: err.message,
         };
-        transporter.sendMail(mailOptions, function (error, info) {
-          if (error) {
-            console.log("Unable to send message!!");
-            process.exit(1);
-          } else {
-            console.log("Error mail sent:" + info.response);
-          }
-        });
+        if (configs.sendmail) {
+          transporter.sendMail(mailOptions, function (error, info) {
+            if (error) {
+              console.log("Unable to send message!!");
+              process.exit(1);
+            } else {
+              console.log("Error mail sent:" + info.response);
+            }
+          });
+        }
         // TODO: send mail about failure
         console.log(err);
         if (configs.sendmail) {

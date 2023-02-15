@@ -1,15 +1,17 @@
 import puppeteer, { Page } from "puppeteer";
+import { config } from "dotenv";
+config();
 
 let preApplied = [];
-
 /**
  *
  * @param {{boid:string,password:string,crn:string,dp:string,pin:string}} account
  * @param {int} kitta
  * @param {int} timeout
+ * @param {boolean} sendmail
  * @returns
  */
-export const fillIPO = async (account, kitta, timeout) => {
+export const fillIPO = async (account, kitta, timeout, sendmail) => {
   const browser = await puppeteer.launch({
     headless: true,
   });
@@ -84,7 +86,14 @@ export const fillIPO = async (account, kitta, timeout) => {
   }
   for (const company of companies) {
     console.log("Applying for:", company.companyName);
-    await fillAndApply(page, company, kitta, account.crn, account.pin);
+    await fillAndApply(
+      page,
+      company,
+      kitta,
+      account.crn,
+      account.pin,
+      sendmail
+    );
     // TODO: ensure we are back to asba page for next ipo
   }
   clearTimeout(id);
@@ -96,8 +105,9 @@ export const fillIPO = async (account, kitta, timeout) => {
  * @param {int} kitta
  * @param {int} crnNumber
  * @param {string} pin
+ * @param {boolean} sendmail
  */
-const fillAndApply = async (page, company, kitta, crnNumber, pin) => {
+const fillAndApply = async (page, company, kitta, crnNumber, pin, sendmail) => {
   const ipoIndex = company.id;
   const [button] = await page.$x(
     `html/body/app-dashboard/div/main/div/app-asba/div/div[2]/app-applicable-issue/div/div/div/div/div[${ipoIndex}]/div/div[2]/div/div[4]/button`
@@ -126,4 +136,22 @@ const fillAndApply = async (page, company, kitta, crnNumber, pin) => {
     "#main > div > app-issue > div > wizard > div > wizard-step:nth-child(2) > div.card > div > form > div.row > div > div > div > button.btn.btn-gap.btn-primary"
   );
   preApplied.push(company.companyName);
+  if (sendmail) {
+    const mailOptions = {
+      from: process.env.EMAIL,
+      to: configs.usermail,
+      subject: "An IPO was successfully applied using IPO Filler",
+      text: `${kitta} units IPOs of ${company.companyName}(${company.shareType}) were applied using our service.\nPlease ensure that no mistake was made.`,
+    };
+    if (configs.sendmail) {
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          console.log("Unable to send message!!");
+          process.exit(1);
+        } else {
+          console.log("Error mail sent:" + info.response);
+        }
+      });
+    }
+  }
 };
