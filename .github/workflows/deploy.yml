@@ -1,9 +1,8 @@
 name: Deploy IPO filler
 
 on:
-  push:
-    branches:
-      - main
+  release:
+    types: [created]
 
 jobs:
   deploy:

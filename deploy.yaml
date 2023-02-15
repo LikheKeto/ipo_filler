@@ -10,7 +10,7 @@
         dest: /home/ubuntu/ipo_filler
         clone: yes
         update: yes
-    - name: Start backend server
+    - name: Start ipo filler
       shell:
         cmd: "docker-compose up --build --no-deps --force-recreate -d"
         chdir: /home/ubuntu/ipo_filler
