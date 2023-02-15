@@ -4,4 +4,4 @@ WORKDIR /usr/src/app
 COPY package*.json ./
 RUN npm ci --only=production
 COPY . .
-CMD ["node", "server.js"]
+CMD ["node", "main.js"]
