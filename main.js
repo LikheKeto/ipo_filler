@@ -7,6 +7,8 @@ config();
 
 let transporter;
 
+console.log("Started service");
+
 if (configs.sendmail) {
   transporter = createTransport({
     service: "gmail",
