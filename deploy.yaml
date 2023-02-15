@@ -1,0 +1,16 @@
+---
+- hosts: all
+  become: true
+  roles:
+    - geerlingguy.docker
+  tasks:
+    - name: Clone github repository
+      git:
+        repo: https://github.com/likheketo/ipo_filler
+        dest: /home/ubuntu/ipo_filler
+        clone: yes
+        update: yes
+    - name: Start backend server
+      shell:
+        cmd: "docker-compose up --build --no-deps --force-recreate -d"
+        chdir: /home/ubuntu/ipo_filler

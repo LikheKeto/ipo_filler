@@ -1,0 +1,23 @@
+name: Deploy IPO filler
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Run ansible playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: deploy.yaml
+          requirements: galaxy-requirements.yaml
+          key: ${{secrets.SSH_PRIVATE_KEY}}
+          inventory: ${{secrets.ANSIBLE_INVENTORY}}
