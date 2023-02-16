@@ -1,17 +1,42 @@
 import puppeteer, { Page } from "puppeteer";
-import { config } from "dotenv";
-config();
+import { loadConfigurations } from "./input.js";
+import { sendMail } from "./emailer.js";
+
+const configurations = loadConfigurations("./config.yaml");
 
 let preApplied = [];
+
+export const applyIPO = async () => {
+  for (const account of configurations.accounts) {
+    try {
+      console.log("Filling IPO from account - " + account.boid);
+      await openASBA(account);
+    } catch (err) {
+      if (
+        err.message === "There are no new IPOs." ||
+        err.message === "Navigation failed because browser has disconnected!"
+      ) {
+        console.log(err.message);
+      } else {
+        console.log(err);
+        if (configurations.sendmail) {
+          sendMail(
+            configurations.usermail,
+            "Unable to apply IPO!",
+            err.message
+          );
+        }
+      }
+    }
+  }
+};
+
 /**
  *
  * @param {{boid:string,password:string,crn:string,dp:string,pin:string}} account
- * @param {int} kitta
- * @param {int} timeout
- * @param {boolean} sendmail
  * @returns
  */
-export const openASBA = async (account, kitta, timeout, sendmail) => {
+const openASBA = async (account) => {
   let launchConfig = {
     headless: false,
   };
@@ -25,7 +50,7 @@ export const openASBA = async (account, kitta, timeout, sendmail) => {
   // because of no atomaticity, some ipos may be filled before premature exit
   let id = setTimeout(async () => {
     await browser.close();
-  }, timeout);
+  }, configurations.timeout * 1000);
 
   page.setUserAgent(
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.75 Safari/537.36"
@@ -90,14 +115,7 @@ export const openASBA = async (account, kitta, timeout, sendmail) => {
   }
   for (const company of companies) {
     console.log("Applying for:", company.companyName);
-    await fillAndApply(
-      page,
-      company,
-      kitta,
-      account.crn,
-      account.pin,
-      sendmail
-    );
+    await fillAndApply(page, company, account);
     // TODO: ensure we are back to asba page for next ipo
   }
   await browser.close();
@@ -107,12 +125,9 @@ export const openASBA = async (account, kitta, timeout, sendmail) => {
 /**
  * @param {Page} page
  * @param {{companyName: any; shareType: any;id: int}} company
- * @param {int} kitta
- * @param {int} crnNumber
- * @param {string} pin
- * @param {boolean} sendmail
+ * @param {{boid: string;password: string;crn: string;dp: string;pin: string;}} account
  */
-const fillAndApply = async (page, company, kitta, crnNumber, pin, sendmail) => {
+const fillAndApply = async (page, company, account) => {
   const ipoIndex = company.id;
   const [button] = await page.$x(
     `html/body/app-dashboard/div/main/div/app-asba/div/div[2]/app-applicable-issue/div/div/div/div/div[${ipoIndex}]/div/div[2]/div/div[4]/button`
@@ -128,36 +143,29 @@ const fillAndApply = async (page, company, kitta, crnNumber, pin, sendmail) => {
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
 
-  await page.type("#appliedKitta", `${kitta}`);
-  await page.type("#crnNumber", `${crnNumber}`);
+  await page.type("#appliedKitta", `${configurations.kitta}`);
+  await page.type("#crnNumber", `${account.crn}`);
 
   await page.click("#disclaimer");
 
   await page.click(
     "#main > div > app-issue > div > wizard > div > wizard-step:nth-child(1) > form > div.card > div > div.row > div:nth-child(2) > div > button.btn.btn-gap.btn-primary"
   );
-  await page.type("#transactionPIN", pin);
+  await page.type("#transactionPIN", account.pin);
   await page.click(
     "#main > div > app-issue > div > wizard > div > wizard-step:nth-child(2) > div.card > div > form > div.row > div > div > div > button.btn.btn-gap.btn-primary"
   );
+  await page.waitForNavigation();
   preApplied.push(company.companyName);
   await page.close();
-  if (sendmail) {
-    const mailOptions = {
-      from: process.env.EMAIL,
-      to: configs.usermail,
-      subject: "An IPO was successfully applied using IPO Filler",
-      text: `${kitta} units IPOs of ${company.companyName}(${company.shareType}) were applied using our service.\nPlease ensure that no mistake was made.`,
-    };
-    if (configs.sendmail) {
-      transporter.sendMail(mailOptions, function (error, info) {
-        if (error) {
-          console.log("Unable to send message!!");
-          process.exit(1);
-        } else {
-          console.log("Error mail sent:" + info.response);
-        }
-      });
-    }
+  if (configurations.sendmail) {
+    sendMail(
+      configurations.usermail,
+      "An IPO was successfully applied using IPO Filler",
+      `${configurations.kitta} units IPOs of ${company.companyName}(${company.shareType}) were applied using our service.
+      \nPlease ensure that no mistake was made.
+      \nBOID used:${account.boid}
+      `
+    );
   }
 };
