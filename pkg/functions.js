@@ -13,7 +13,7 @@ let preApplied = [];
  */
 export const openASBA = async (account, kitta, timeout, sendmail) => {
   let launchConfig = {
-    headless: true,
+    headless: false,
   };
   if (process.platform === "linux") {
     launchConfig.executablePath = "/usr/bin/chromium-browser";
@@ -100,6 +100,7 @@ export const openASBA = async (account, kitta, timeout, sendmail) => {
     );
     // TODO: ensure we are back to asba page for next ipo
   }
+  await browser.close();
   clearTimeout(id);
 };
 
@@ -140,6 +141,7 @@ const fillAndApply = async (page, company, kitta, crnNumber, pin, sendmail) => {
     "#main > div > app-issue > div > wizard > div > wizard-step:nth-child(2) > div.card > div > form > div.row > div > div > div > button.btn.btn-gap.btn-primary"
   );
   preApplied.push(company.companyName);
+  await page.close();
   if (sendmail) {
     const mailOptions = {
       from: process.env.EMAIL,

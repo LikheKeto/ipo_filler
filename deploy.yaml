@@ -10,5 +10,5 @@
         update: yes
     - name: Start ipo filler
       shell:
-        cmd: "npm install && node main.js"
+        cmd: "npm install && node main.js &"
         chdir: /home/ubuntu/ipo_filler
