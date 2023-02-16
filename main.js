@@ -7,7 +7,7 @@ const configs = getAccountDetails("./config.yaml");
 
 console.log("Started service");
 
-setInterval(async () => {
+const applyIPO = async () => {
   for (const account of configs.accounts) {
     try {
       console.log("Filling IPO from account - " + account.boid);
@@ -48,4 +48,6 @@ setInterval(async () => {
       }
     }
   }
-}, 1000 * 60 * 60 * 24);
+};
+await applyIPO();
+setInterval(applyIPO, 1000 * 60 * 60 * 24);
