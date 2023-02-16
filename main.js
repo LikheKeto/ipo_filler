@@ -1,4 +1,4 @@
-import { fillIPO } from "./pkg/functions.js";
+import { openASBA } from "./pkg/functions.js";
 import { getAccountDetails } from "./pkg/input.js";
 import { config } from "dotenv";
 config();
@@ -11,7 +11,7 @@ const applyIPO = async () => {
   for (const account of configs.accounts) {
     try {
       console.log("Filling IPO from account - " + account.boid);
-      await fillIPO(
+      await openASBA(
         account,
         configs.kitta,
         configs.timeout * 1000, // convert seconds to ms

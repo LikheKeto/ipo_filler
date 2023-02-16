@@ -11,10 +11,14 @@ let preApplied = [];
  * @param {boolean} sendmail
  * @returns
  */
-export const fillIPO = async (account, kitta, timeout, sendmail) => {
-  const browser = await puppeteer.launch({
+export const openASBA = async (account, kitta, timeout, sendmail) => {
+  let launchConfig = {
     headless: true,
-  });
+  };
+  if (process.platform === "linux") {
+    launchConfig.executablePath = "/usr/bin/chromium-browser";
+  }
+  const browser = await puppeteer.launch(launchConfig);
   const page = await browser.newPage();
 
   // ensuring puppeteer doesnot keep waiting forever
