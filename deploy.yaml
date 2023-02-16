@@ -12,5 +12,5 @@
         update: yes
     - name: Start ipo filler
       shell:
-        cmd: "docker-compose up --build --no-deps --force-recreate -d"
+        cmd: "npm install && node main.js"
         chdir: /home/ubuntu/ipo_filler
